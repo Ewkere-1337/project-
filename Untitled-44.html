@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="uk">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Угадай число — мінігра</title>
+    <style>
+         :root {
+            --bg: #0f172a;
+            --card: #0b1220;
+            --accent: #60a5fa;
+            --muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444
+        }
+        
+        * {
+            box-sizing: border-box
+        }
+        
+        body {
+            font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+            background: linear-gradient(180deg, #071028 0%, #081229 100%);
+            color: #e6eef8;
+            margin: 0;
+            padding: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh
+        }
+        
+        .card {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+            border-radius: 12px;
+            padding: 24px;
+            width: 100%;
+            max-width: 720px;
+            box-shadow: 0 8px 30px rgba(2, 6, 23, 0.6)
+        }
+        
+        h1 {
+            margin: 0 0 8px 0;
+            font-size: 20px
+        }
+        
+        p.lead {
+            margin: 0 0 18px 0;
+            color: var(--muted)
+        }
+        
+        .controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px
+        }
+        
+        input[type=number] {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: transparent;
+            color: inherit;
+            font-size: 16px
+        }
+        
+        button {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 0;
+            cursor: pointer;
+            font-weight: 600
+        }
+        
+        .btn-try {
+            background: linear-gradient(90deg, var(--accent), #3b82f6);
+            color: #071233
+        }
+        
+        .btn-new {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: var(--muted)
+        }
+        
+        .status {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.02)
+        }
+        
+        .meta {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 14px
+        }
+        
+        .hint {
+            font-weight: 700
+        }
+        
+        .footer {
+            margin-top: 18px;
+            color: var(--muted);
+            font-size: 13px
+        }
+        
+        .best {
+            color: var(--accent);
+            font-weight: 700
+        }
+        
+        .small {
+            font-size: 13px;
+            color: var(--muted)
+        }
+        
+        @media (max-width:520px) {
+            body {
+                padding: 16px
+            }
+            .card {
+                padding: 18px
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="card" role="main">
+        <h1>Угадай число — мінігра</h1>
+        <p class="lead">Спробуй відгадати випадкове число від 1 до 100! Ця гра допоможе перевірити твою інтуїцію та уважність. У тебе необмежена кількість спроб, але чим менше — тим краще!</p>
+
+        <div class="controls">
+            <label for="guess" class="small" style="display:none">Введіть число</label>
+            <input id="guess" type="number" min="1" max="100" placeholder="Введіть число від 1 до 100" aria-label="Введіть число" />
+            <button id="tryBtn" class="btn-try">Відгадати</button>
+            <button id="newBtn" class="btn-new">Нова гра</button>
+        </div>
+
+        <div class="status" id="status">Почніть гру — введіть число і натисніть «Відгадати».</div>
+
+        <div class="meta">
+            <div>Спроби: <span id="attempts">0</span></div>
+            <div>Діапазон: <span id="range">1–100</span></div>
+            <div>Кращий результат: <span id="best" class="best">—</span></div>
+        </div>
+
+        <p class="footer">Бажаємо гарного настрою та вдалих спроб! 🎯</p>
+    </main>
+
+    <script>
+        (function() {
+            const max = 100,
+                min = 1;
+            let secret = null;
+            let attempts = 0;
+            const guessInput = document.getElementById('guess');
+            const tryBtn = document.getElementById('tryBtn');
+            const newBtn = document.getElementById('newBtn');
+            const statusEl = document.getElementById('status');
+            const attemptsEl = document.getElementById('attempts');
+            const bestEl = document.getElementById('best');
+
+            function randInt(a, b) {
+                return Math.floor(Math.random() * (b - a + 1)) + a
+            }
+
+            function loadBest() {
+                const v = localStorage.getItem('guess_best');
+                return v ? Number(v) : null;
+            }
+
+            function saveBest(value) {
+                localStorage.setItem('guess_best', String(value))
+            }
+
+            function updateBestDisplay() {
+                const b = loadBest();
+                bestEl.textContent = b === null ? '—' : b
+            }
+
+            function newGame() {
+                secret = randInt(min, max);
+                attempts = 0;
+                attemptsEl.textContent = attempts;
+                statusEl.textContent = `Нова гра: загадайте число між ${min} та ${max}. Удачі!`;
+                guessInput.value = '';
+                guessInput.disabled = false;
+                tryBtn.disabled = false;
+                console.log('Секретне число для відладки:', secret);
+            }
+
+            function endGame(win) {
+                guessInput.disabled = true;
+                tryBtn.disabled = true;
+                if (win) {
+                    const best = loadBest();
+                    if (best === null || attempts < best) {
+                        saveBest(attempts);
+                        updateBestDisplay();
+                        statusEl.textContent += ' Ви встановили новий рекорд!';
+                    }
+                }
+            }
+
+            function handleTry() {
+                const raw = guessInput.value.trim();
+                if (raw === '') {
+                    statusEl.textContent = 'Будь ласка, введіть число.';
+                    return
+                }
+                const val = Number(raw);
+                if (!Number.isInteger(val) || val < min || val > max) {
+                    statusEl.textContent = `Введіть ціле число від ${min} до ${max}.`;
+                    return
+                }
+                attempts += 1;
+                attemptsEl.textContent = attempts;
+
+                if (val === secret) {
+                    statusEl.textContent = `Вітаю! Ви відгадали число ${secret} за ${attempts} ${attempts===1? 'спробу':'спроби'}.`;
+                    endGame(true);
+                } else if (val < secret) {
+                    statusEl.textContent = 'Загадане число більше — спробуйте більше.';
+                } else {
+                    statusEl.textContent = 'Загадане число менше — спробуйте менше.';
+                }
+            }
+
+            tryBtn.addEventListener('click', handleTry);
+            newBtn.addEventListener('click', newGame);
+
+            guessInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') handleTry()
+            });
+
+            updateBestDisplay();
+            newGame();
+
+            window.guessGameState = function() {
+                return {
+                    secret,
+                    attempts,
+                    best: loadBest()
+                };
+            };
+        })();
+    </script>
+</body>
+
+</html>

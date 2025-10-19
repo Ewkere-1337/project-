@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Квіз — Настрій дня</title>
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            background: linear-gradient(135deg, #ffe4c4, #ffd1dc);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 40px 20px;
+        }
+        
+        .quiz-container {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: 0.4s ease;
+        }
+        
+        header {
+            background: linear-gradient(90deg, #ff9a8b, #ff6a88, #ff99ac);
+            color: white;
+            padding: 20px 30px;
+        }
+        
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+        
+        main {
+            padding: 30px;
+        }
+        
+        .question {
+            font-size: 1.2em;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+        
+        .options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+        
+        .option {
+            background: #fff6f4;
+            border: 2px solid transparent;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 1.5em;
+        }
+        
+        .option:hover {
+            background: #ffe2de;
+        }
+        
+        .option.selected {
+            border-color: #ff6a88;
+            background: #ffd8d8;
+        }
+        
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        button {
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: 500;
+            font-size: 1em;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .prev-btn {
+            background: #ddd;
+        }
+        
+        .next-btn {
+            background: #ff6a88;
+            color: white;
+        }
+        
+        .result-card {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .result-card h2 {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+        
+        .result-emoji {
+            font-size: 3em;
+        }
+        
+        .result-desc {
+            margin-top: 10px;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="quiz-container">
+        <header>
+            <h1>Квіз — Настрій дня</h1>
+            <p>Відповідай на 10 коротких питань, щоб дізнатися свій сьогоднішній настрій 💫</p>
+        </header>
+        <main id="quiz-main">
+            <div id="question-container"></div>
+            <div class="buttons">
+                <button id="prev-btn" class="prev-btn" disabled>← Назад</button>
+                <button id="next-btn" class="next-btn">Далі →</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const questions = [{
+            q: "Як ти прокинувся сьогодні?",
+            options: ["😴", "😕", "😐", "🙂", "😄"]
+        }, {
+            q: "Яка у тебе енергія зараз?",
+            options: ["💤", "😌", "😶", "⚡", "🔥"]
+        }, {
+            q: "Як проходить спілкування з людьми?",
+            options: ["😒", "😕", "🙂", "😊", "🤩"]
+        }, {
+            q: "Яке у тебе відчуття всередині?",
+            options: ["😔", "😐", "🙂", "😌", "😇"]
+        }, {
+            q: "Як ти оцінюєш свій фокус/увагу сьогодні?",
+            options: ["😵", "😕", "😐", "🙂", "😎"]
+        }, {
+            q: "Як тобі погода сьогодні?",
+            options: ["🌧️", "🌫️", "⛅", "🌤️", "☀️"]
+        }, {
+            q: "Як ти ставишся до роботи/навчання зараз?",
+            options: ["😩", "😕", "😐", "🙂", "🤓"]
+        }, {
+            q: "Наскільки ти розслаблений?",
+            options: ["😣", "😐", "😌", "😎", "🧘"]
+        }, {
+            q: "Як тобі настрій загалом?",
+            options: ["😭", "😕", "😐", "🙂", "😄"]
+        }, {
+            q: "Що відчуваєш, дивлячись у дзеркало?",
+            options: ["😔", "😕", "😐", "🙂", "😎"]
+        }, ];
+
+        let currentIndex = 0;
+        let answers = JSON.parse(localStorage.getItem("moodQuizAnswers")) || [];
+
+        function renderQuestion() {
+            const container = document.getElementById("question-container");
+            const q = questions[currentIndex];
+            if (!q) return;
+
+            container.innerHTML = `
+    <div class="question">Питання ${currentIndex + 1} з ${questions.length}: ${q.q}</div>
+    <div class="options">
+      ${q.options.map((opt, i) => `
+        <div class="option ${answers[currentIndex] === i ? 'selected' : ''}" data-index="${i}">
+          ${opt}
+        </div>`).join('')}
+    </div>
+  `;
+
+  document.querySelectorAll(".option").forEach(opt => {
+    opt.addEventListener("click", () => {
+      answers[currentIndex] = parseInt(opt.dataset.index);
+      localStorage.setItem("moodQuizAnswers", JSON.stringify(answers));
+      renderQuestion();
+    });
+  });
+
+  document.getElementById("prev-btn").disabled = currentIndex === 0;
+  document.getElementById("next-btn").textContent =
+    currentIndex === questions.length - 1 ? "Завершити" : "Далі →";
+}
+
+function showResult() {
+  const score = answers.reduce((a,b)=>a+(b||0),0);
+  let mood = "";
+  let emoji = "";
+  let desc = "";
+
+  if (score < 15) { mood="Втомлений", emoji="😞", desc="Схоже, тобі потрібно трохи відпочинку 💆"; }
+  else if (score < 30) { mood="Спокійний", emoji="😌", desc="Ти врівноважений, насолоджуйся стабільністю 🌿"; }
+  else if (score < 40) { mood="Натхненний", emoji="✨", desc="Ти на хвилі позитиву, використовуй цю енергію! 💫"; }
+  else { mood="Радісний", emoji="😄", desc="Твій день — просто чудовий, ділись настроєм з іншими 🌞"; }
+
+  document.getElementById("quiz-main").innerHTML = `
+    <div class="result-card">
+      <div class="result-emoji">${emoji}</div>
+      <h2>${mood}</h2>
+      <p class="result-desc">${desc}</p>
+      <button class="next-btn" onclick="restartQuiz()">Пройти ще раз</button>
+    </div>
+  `;
+
+  localStorage.setItem("moodQuizLast", JSON.stringify({ mood, emoji, desc, date: new Date().toLocaleString() }));
+}
+
+function restartQuiz() {
+  answers = [];
+  localStorage.removeItem("moodQuizAnswers");
+  currentIndex = 0;
+  renderQuestion();
+  document.getElementById("quiz-main").innerHTML = `
+    <div id="question-container"></div>
+    <div class="buttons">
+      <button id="prev-btn" class="prev-btn" disabled>← Назад</button>
+      <button id="next-btn" class="next-btn">Далі →</button>
+    </div>`;
+  initButtons();
+  renderQuestion();
+}
+
+function initButtons() {
+  document.getElementById("next-btn").addEventListener("click", () => {
+    if (currentIndex < questions.length - 1) {
+      currentIndex++;
+      renderQuestion();
+    } else {
+      showResult();
+    }
+  });
+
+  document.getElementById("prev-btn").addEventListener("click", () => {
+    if (currentIndex > 0) {
+      currentIndex--;
+      renderQuestion();
+    }
+  });
+}
+
+initButtons();
+renderQuestion();
+    </script>
+</body>
+
+</html>
